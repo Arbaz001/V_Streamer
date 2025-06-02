@@ -15,6 +15,7 @@ router.post("/signup", async (req, res) => {
       req.files.logoUrl.tempFilePath
     );
 
+    
     const newUser = new User({
       _id: new mongoose.Types.ObjectId(),
       channelName: req.body.channelName,
