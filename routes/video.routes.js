@@ -139,4 +139,130 @@ router.delete("/delete/:id", checkAuth, async (req, res) => {
   }
 });
 
+// GET All Videos (Public)
+router.get("/all", async (req, res) => {
+  try {
+    const videos = await Video.find().sort({ createdAt: -1 });
+    res.status(200).json(videos);
+    console.log("(Public)Get All Videos")
+  } catch (error) {
+    console.error("All Videos Error:", error);
+    res.status(500).json({ error: "Something went wrong", message: error.message });
+  }
+});
+
+// GET My Videos (Private)
+router.get("/my-videos", checkAuth, async (req, res) => {
+  try {
+    const videos = await Video.find({ user_id: req.user._id }).sort({ createdAt: -1 });
+    res.status(200).json(videos);
+    console.log("Get My(User) Videos")
+  } catch (error) {
+    console.error("My Videos Error:", error);
+    res.status(500).json({ error: "Something went wrong", message: error.message });
+  }
+});
+
+//  GET Video By ID (also track view) (Private)
+router.get("/:id", checkAuth, async (req, res) => {
+  try {
+    const videoId = req.params.id;
+    const userId = req.user._id;
+
+    const video = await Video.findByIdAndUpdate(
+      videoId,
+      { $addToSet: { viewedBy: userId } }, // Avoid duplicate views
+      { new: true }
+    );
+
+    if (!video) {
+      return res.status(404).json({ error: "Video not found" });
+    }
+
+    res.status(200).json(video);
+    console.log("Get videos by _id");
+  } catch (error) {
+    console.error("Get Video By ID Error:", error);
+    res.status(500).json({ error: "Something went wrong", message: error.message });
+  }
+});
+
+// GET Videos By Category (Public)
+router.get("/category/:category", async (req, res) => {
+  try {
+    const category = req.params.category;
+    const videos = await Video.find({ category }).sort({ createdAt: -1 });
+    res.status(200).json(videos);
+    console.log("(Public)Get Video By Category");
+  } catch (error) {
+    console.error("Category Videos Error:", error);
+    res.status(500).json({ error: "Something went wrong", message: error.message });
+  }
+});
+
+
+// Get Videos by Tag
+router.get("/tags/:tag", async (req, res) => {
+  try {
+    const tag = req.params.tag;
+    const videos = await Video.find({ tags: tag }).sort({ createdAt: -1 });
+
+    res.status(200).json(videos);
+    console.log("(Public) Get Videos By Tag")
+  } catch (error) {
+    console.error("Tag Fetch Error:", error);
+    res.status(500).json({ error: "Something went wrong", message: error.message });
+  }
+});
+
+// Like a Video (number based)
+router.post("/like", checkAuth, async (req, res) => {
+  try {
+    const { videoId } = req.body;
+
+    const video = await Video.findById(videoId);
+    if (!video) return res.status(404).json({ error: "Video not found" });
+
+    video.likes += 1;
+    if (video.dislikes > 0) {
+      video.dislikes -= 1;
+    }
+
+    await video.save();
+
+    res.status(200).json({ message: "Video liked", likes: video.likes, dislikes: video.dislikes });
+    console.log("video Like")
+  } catch (error) {
+    console.error("Like Error:", error);
+    res.status(500).json({ error: "Something went wrong", message: error.message });
+  }
+});
+
+// Dislike a Video (number based)
+router.post("/dislike", checkAuth, async (req, res) => {
+  try {
+    const { videoId } = req.body;
+
+    const video = await Video.findById(videoId);
+    if (!video) return res.status(404).json({ error: "Video not found" });
+
+    video.dislikes += 1;
+    if (video.likes > 0) {
+      video.likes -= 1;
+    }
+
+    await video.save();
+
+    res.status(200).json({ message: "Video disliked", likes: video.likes, dislikes: video.dislikes });
+    console.log("Video Dislike")
+  } catch (error) {
+    console.error("Dislike Error:", error);
+    res.status(500).json({ error: "Something went wrong", message: error.message });
+  }
+});
+
+
+
+
+
 export default router;
