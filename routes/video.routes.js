@@ -8,7 +8,126 @@ import { checkAuth } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// Upload Video Endpoint
+/**
+ * @swagger
+ * tags:
+ *   name: Videos
+ *   description: Video management endpoints
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Video:
+ *       type: object
+ *       required:
+ *         - title
+ *         - description
+ *         - user_id
+ *         - videoUrl
+ *         - thumbnailUrl
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: Auto-generated video ID
+ *         title:
+ *           type: string
+ *           example: "My Awesome Video"
+ *         description:
+ *           type: string
+ *           example: "This is a description of my video"
+ *         user_id:
+ *           type: string
+ *           description: ID of the user who uploaded the video
+ *         videoUrl:
+ *           type: string
+ *           format: uri
+ *           example: "https://res.cloudinary.com/example/video/upload/v12345/video.mp4"
+ *         videoId:
+ *           type: string
+ *           example: "videos/video_12345"
+ *         thumbnailUrl:
+ *           type: string
+ *           format: uri
+ *           example: "https://res.cloudinary.com/example/image/upload/v12345/thumbnail.jpg"
+ *         thumbnailId:
+ *           type: string
+ *           example: "thumbnails/thumbnail_12345"
+ *         category:
+ *           type: string
+ *           example: "Gaming"
+ *         tags:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["action", "adventure"]
+ *         likes:
+ *           type: number
+ *           example: 100
+ *         dislikes:
+ *           type: number
+ *           example: 5
+ *         viewedBy:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of user IDs who viewed the video
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *     VideoUpload:
+ *       type: object
+ *       required:
+ *         - title
+ *         - description
+ *         - category
+ *         - video
+ *         - thumbnail
+ *       properties:
+ *         title:
+ *           type: string
+ *         description:
+ *           type: string
+ *         category:
+ *           type: string
+ *         tags:
+ *           type: string
+ *           description: Comma-separated list of tags
+ *         video:
+ *           type: string
+ *           format: binary
+ *         thumbnail:
+ *           type: string
+ *           format: binary
+ */
+
+/**
+ * @swagger
+ * /api/v1/video/upload:
+ *   post:
+ *     summary: Upload a new video
+ *     tags: [Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/VideoUpload'
+ *     responses:
+ *       200:
+ *         description: Video uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Video'
+ *       400:
+ *         description: Video and thumbnail are required
+ *       500:
+ *         description: Internal server error
+ */
 router.post("/upload", checkAuth, async (req, res) => {
   try {
     const { title, description, category, tags } = req.body;
@@ -57,7 +176,52 @@ router.post("/upload", checkAuth, async (req, res) => {
   }
 });
 
-// Update Video Endpoint
+/**
+ * @swagger
+ * /api/v1/video/update/{id}:
+ *   put:
+ *     summary: Update a video
+ *     tags: [Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Video ID
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *               tags:
+ *                 type: string
+ *               thumbnail:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Video updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Video'
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: Video not found
+ *       500:
+ *         description: Internal server error
+ */
 router.put("/update/:id", checkAuth, async (req, res) => {
   try {
     const { title, description, category, tags } = req.body;
@@ -104,7 +268,31 @@ router.put("/update/:id", checkAuth, async (req, res) => {
   }
 });
 
-// Delete Video Endpoint
+/**
+ * @swagger
+ * /api/v1/video/delete/{id}:
+ *   delete:
+ *     summary: Delete a video
+ *     tags: [Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Video ID
+ *     responses:
+ *       200:
+ *         description: Video deleted successfully
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: Video not found
+ *       500:
+ *         description: Internal server error
+ */
 router.delete("/delete/:id", checkAuth, async (req, res) => {
   try {
     const videoId = req.params.id;
@@ -118,7 +306,7 @@ router.delete("/delete/:id", checkAuth, async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    // Delete from Cloudinary
+
     if (video.videoId) {
       await cloudinary.uploader.destroy(video.videoId, {
         resource_type: "video",
@@ -139,7 +327,24 @@ router.delete("/delete/:id", checkAuth, async (req, res) => {
   }
 });
 
-// GET All Videos (Public)
+/**
+ * @swagger
+ * /api/v1/video/all:
+ *   get:
+ *     summary: Get all videos (Public)
+ *     tags: [Videos]
+ *     responses:
+ *       200:
+ *         description: List of all videos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Video'
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/all", async (req, res) => {
   try {
     const videos = await Video.find().sort({ createdAt: -1 });
@@ -151,7 +356,26 @@ router.get("/all", async (req, res) => {
   }
 });
 
-// GET My Videos (Private)
+/**
+ * @swagger
+ * /api/v1/video/my-videos:
+ *   get:
+ *     summary: Get current user's videos (Private)
+ *     tags: [Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of user's videos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Video'
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/my-videos", checkAuth, async (req, res) => {
   try {
     const videos = await Video.find({ user_id: req.user._id }).sort({ createdAt: -1 });
@@ -163,7 +387,33 @@ router.get("/my-videos", checkAuth, async (req, res) => {
   }
 });
 
-//  GET Video By ID (also track view) (Private)
+/**
+ * @swagger
+ * /api/v1/video/{id}:
+ *   get:
+ *     summary: Get video by ID and track view (Private)
+ *     tags: [Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Video ID
+ *     responses:
+ *       200:
+ *         description: Video details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Video'
+ *       404:
+ *         description: Video not found
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/:id", checkAuth, async (req, res) => {
   try {
     const videoId = req.params.id;
@@ -171,7 +421,7 @@ router.get("/:id", checkAuth, async (req, res) => {
 
     const video = await Video.findByIdAndUpdate(
       videoId,
-      { $addToSet: { viewedBy: userId } }, // Avoid duplicate views
+      { $addToSet: { viewedBy: userId } },
       { new: true }
     );
 
@@ -187,7 +437,31 @@ router.get("/:id", checkAuth, async (req, res) => {
   }
 });
 
-// GET Videos By Category (Public)
+/**
+ * @swagger
+ * /api/v1/video/category/{category}:
+ *   get:
+ *     summary: Get videos by category (Public)
+ *     tags: [Videos]
+ *     parameters:
+ *       - in: path
+ *         name: category
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Video category
+ *     responses:
+ *       200:
+ *         description: List of videos in category
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Video'
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/category/:category", async (req, res) => {
   try {
     const category = req.params.category;
@@ -200,8 +474,31 @@ router.get("/category/:category", async (req, res) => {
   }
 });
 
-
-// Get Videos by Tag
+/**
+ * @swagger
+ * /api/v1/video/tags/{tag}:
+ *   get:
+ *     summary: Get videos by tag (Public)
+ *     tags: [Videos]
+ *     parameters:
+ *       - in: path
+ *         name: tag
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Video tag
+ *     responses:
+ *       200:
+ *         description: List of videos with tag
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Video'
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/tags/:tag", async (req, res) => {
   try {
     const tag = req.params.tag;
@@ -215,7 +512,44 @@ router.get("/tags/:tag", async (req, res) => {
   }
 });
 
-// Like a Video (number based)
+/**
+ * @swagger
+ * /api/v1/video/like:
+ *   post:
+ *     summary: Like a video (number based)
+ *     tags: [Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - videoId
+ *             properties:
+ *               videoId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Video liked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 likes:
+ *                   type: number
+ *                 dislikes:
+ *                   type: number
+ *       404:
+ *         description: Video not found
+ *       500:
+ *         description: Internal server error
+ */
 router.post("/like", checkAuth, async (req, res) => {
   try {
     const { videoId } = req.body;
@@ -238,7 +572,44 @@ router.post("/like", checkAuth, async (req, res) => {
   }
 });
 
-// Dislike a Video (number based)
+/**
+ * @swagger
+ * /api/v1/video/dislike:
+ *   post:
+ *     summary: Dislike a video (number based)
+ *     tags: [Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - videoId
+ *             properties:
+ *               videoId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Video disliked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 likes:
+ *                   type: number
+ *                 dislikes:
+ *                   type: number
+ *       404:
+ *         description: Video not found
+ *       500:
+ *         description: Internal server error
+ */
 router.post("/dislike", checkAuth, async (req, res) => {
   try {
     const { videoId } = req.body;
