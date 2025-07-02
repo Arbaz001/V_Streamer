@@ -1,7 +1,7 @@
 {
   "name": "youtube-api",
   "version": "1.0.0",
-  "description": "",
+  "description": "A comprehensive video streaming platform backend built with Node.js, Express, and MongoDB. This API provides complete functionality for user management, video upload/streaming, and social features like comments and likes.",
   "license": "ISC",
   "author": "Arbaz Ali",
   "type": "module",
